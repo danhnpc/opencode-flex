@@ -1,0 +1,56 @@
+# ---------------------------------------------------------------------------
+# AI session data: NEVER commit. These files contain prompts, source code and
+# possibly credentials from the user's own machine.
+# ---------------------------------------------------------------------------
+*.jsonl
+.claude/
+.claude.json
+sessions/
+projects/
+*.key
+.credentials.json
+*.credentials.json
+history.jsonl
+
+# Local fixtures / captures used while developing
+fixtures/
+samples/
+*.session-dump.*
+*.transcript.*
+
+# ---------------------------------------------------------------------------
+# Secrets and local configuration
+# ---------------------------------------------------------------------------
+.env
+.env.*
+*.pem
+*.p12
+*.pfx
+*secret*
+!*secret*.example.*
+
+# ---------------------------------------------------------------------------
+# Dependencies and build output
+# ---------------------------------------------------------------------------
+node_modules/
+*.log
+npm-debug.log*
+*.tsbuildinfo
+dist/*.map
+.vite/
+.turbo/
+
+# NOTE: dist/gui-experimental.cjs is intentionally TRACKED.
+# OpenCode Desktop requires a prebuilt CommonJS bundle at the
+# ./gui-experimental export, so a fresh clone must be able to load it
+# without running a build first.
+
+# ---------------------------------------------------------------------------
+# OS / editor
+# ---------------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/*
+!.vscode/extensions.json
