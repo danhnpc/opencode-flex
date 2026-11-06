@@ -136,7 +136,7 @@ export function SessionsView() {
         <div style={{ padding: "4px 10px", opacity: "0.6" }}>{ctx.t("loading")}</div>
       </Show>
       <div style={{ padding: "2px 10px 6px", opacity: "0.55", "font-size": "11px" }}>
-        {ctx.t("count", { count: items().length })}
+        {items().length} {ctx.t("count.label")}
       </div>
 
       <div style={{ flex: "1", "min-height": "0", overflow: "auto" }}>

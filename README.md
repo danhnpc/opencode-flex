@@ -26,6 +26,7 @@ repo or rewriting the UI — hence the deliberately general name.
 - `POST /api/experimental/session/import` returned `200`, the session was readable via `session.get` (`200`), then removed (`204`). No model call was made.
 - Listing 762 root sessions from ~1.3 GB of transcripts took ~0.3–0.6 s; reading one 500 KB transcript took ~4 ms.
 - All three working modes were exercised end-to-end against a temporary session: `plan` → agent `plan`, `manual` → two `ask` rules, `auto` → cleared rules. Session was removed afterwards.
+- Verified visually on the running desktop: the `Flex Sessions` panel lists sessions, and the `Auto` pill sits in the composer toolbar immediately next to the `Default` effort picker.
 
 ---
 
@@ -66,6 +67,20 @@ The mode is stored per session. Joining a session from the panel creates the new
 OpenCode session in the mode currently shown by the pill, and re-joining with a
 different mode updates that same session instead of creating a duplicate.
 Changing modes never calls a model.
+
+## Where the mode pill sits
+
+The official `ComposerPill` registry renders pills in the row **above** the
+composer. The mode belongs next to the model / effort pickers, so the plugin
+moves the pill strip into the composer's control row
+(`form[data-component="composer"] [data-slot="composer-controls"]`) with a small
+`MutationObserver`, and tunes spacing with the `Style` registry.
+
+This is the one part that relies on the app's internal `data-slot` attributes
+(verified on Desktop 2.2.5). It degrades gracefully: if a future release changes
+those selectors, the pill simply stays in its original row above the composer —
+mode switching, Shift+Tab and Join all keep working. No `app.asar` patch, no DOM
+cloning, no model call.
 
 ## How it works
 

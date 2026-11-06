@@ -1,8 +1,10 @@
+import { onCleanup } from "solid-js"
 import {
   Command,
   ComposerPill,
   MenuItem,
   Panel,
+  Style,
   TitlebarItem,
   createKeyed,
   type Command as CommandType,
@@ -144,6 +146,62 @@ export const setup: Plugin.Setup<typeof definition> = (ctx) => {
       }
     },
   })
+
+  // The official ComposerPill registry renders its pills in the row ABOVE the
+  // composer. The mode belongs next to the model / effort pickers, which live
+  // inside `form[data-component="composer"] [data-slot="composer-controls"]`.
+  // Move the plugin pill strip into that toolbar. This uses the app's own
+  // data-slot (verified on 2.2.5) and degrades gracefully: if a future release
+  // changes the selector, the pill simply stays in its original row.
+  ctx.add(
+    Style,
+    `
+[data-component="session-plugin-pills"][data-flex-relocated="true"] {
+  order: 1;
+  gap: 4px;
+  margin-inline: 4px 2px;
+}
+[data-component="session-plugin-pills"][data-flex-relocated="true"] [data-slot="session-plugin-pill"] {
+  height: 28px;
+}
+`.trim(),
+  )
+
+  const relocate = () => {
+    if (typeof document === "undefined") return
+    const pills = document.querySelector<HTMLElement>(
+      '[data-component="session-plugin-pills"]',
+    )
+    const controls = document.querySelector<HTMLElement>(
+      'form[data-component="composer"] [data-slot="composer-controls"] > div',
+    )
+    if (!pills || !controls || pills.parentElement === controls) return
+    pills.dataset.flexRelocated = "true"
+    controls.appendChild(pills)
+  }
+
+  let queued = false
+  const observer = new MutationObserver(() => {
+    if (queued) return
+    queued = true
+    requestAnimationFrame(() => {
+      queued = false
+      relocate()
+    })
+  })
+  const watch = () => {
+    relocate()
+    const root =
+      document.querySelector('[data-component="session-composer-dock"]') ??
+      document.body
+    observer.observe(root, { childList: true, subtree: true })
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", watch, { once: true })
+  } else {
+    queueMicrotask(watch)
+  }
+  onCleanup(() => observer.disconnect())
 
   // Shift+Tab cycles plan -> manual -> auto, like Claude Code.
   ctx.add(
