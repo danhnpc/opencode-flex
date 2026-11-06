@@ -18,6 +18,14 @@ repo or rewriting the UI — hence the deliberately general name.
 > The GUI plugin SDK (`./gui-experimental`) and the session import endpoint are
 > both marked experimental upstream and may change between releases.
 
+### Verified on 2.2.5 (Windows)
+
+- `/api/plugin` reports `flex-session-bridge` as `{"features":{"gui":true},"state":{"status":"active"}}` — a GUI-only plugin loads without a server part.
+- `/api/plugin/gui?id=flex-session-bridge` serves the prebuilt CJS bundle.
+- `location.get`, `agent.list` and `model.default` return the shapes used to build the import payload. The default model here is the OpenCode model, not Claude Code.
+- `POST /api/experimental/session/import` returned `200`, the session was readable via `session.get` (`200`), then removed (`204`). No model call was made.
+- Listing 762 root sessions from ~1.3 GB of transcripts took ~0.3–0.6 s; reading one 500 KB transcript took ~4 ms.
+
 ---
 
 ## The zero-token rule
@@ -120,7 +128,8 @@ src/
 | `POST /api/experimental/session/import` | Experimental. An adapter + fallback (`session.create` + composer context injection) covers the case where it disappears. |
 | Plugin id | Package name is `flex-session-bridge`, **not** `opencode*`. OpenCode reserves ids in the `opencode` namespace and will not load those GUIs. |
 | Tool calls | Folded into text parts to avoid a lossy format conversion. |
-| Large histories | The panel only stats files; it never loads the full transcript set at startup. |
+| Large histories | Startup stats transcript files and reads only a bounded 64 KB head of each for its title/cwd. On a machine with 761 root sessions (~1.3 GB of `.jsonl`), the first list took ~0.6 s and cost zero tokens. |
+| Nested subagent logs | `projects/<cwd>/<uuid>/subagents/*.jsonl` are parts of a parent session, not standalone sessions, so they are listed as part of the parent rather than duplicated in the panel. |
 
 ---
 
