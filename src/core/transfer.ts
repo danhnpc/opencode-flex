@@ -53,7 +53,7 @@ const ZERO_TOKENS = {
 export async function buildTransfer(
   client: TransferClient,
   transcript: Transcript,
-  opts: { title: string; source: string },
+  opts: { title: string; source: string; agent: string },
 ): Promise<TransferPayload> {
   const directory = transcript.directory
   const where = { directory }
@@ -65,8 +65,9 @@ export async function buildTransfer(
   ])
 
   const agent =
-    agents.data.find((a) => a.mode === "primary")?.id ??
-    agents.data[0]?.id ??
+    opts.agent ||
+    agents.data.find((a) => a.mode === "primary")?.id ||
+    agents.data[0]?.id ||
     "build"
 
   const agentModel = agents.data.find((a) => a.model)?.model
@@ -102,6 +103,7 @@ export async function buildTransfer(
       // Set by the caller to a deterministic id so re-joining is idempotent.
       id: "",
       projectID: loc.project.id,
+      agent: opts.agent,
       cost: 0,
       tokens: ZERO_TOKENS,
       time: { created: transcript.createdAt, updated: transcript.updatedAt },

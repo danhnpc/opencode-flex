@@ -2,6 +2,7 @@ import { For, Show, createMemo, createSignal, onCleanup, onMount } from "solid-j
 import { usePlugin, type Plugin } from "@opencode/plugin/gui"
 import type { definition } from "./definition"
 import { SessionsIpc } from "./contract"
+import { DEFAULT_MODE } from "../core/mode"
 import type { SessionSummary } from "../core/types"
 
 const shell: Record<string, string> = {
@@ -71,7 +72,18 @@ export function SessionsView() {
     setJoining(session.id)
     setError("")
     try {
-      const id = await ipc.join(session.id, { signal: ctx.signal })
+      const current = ctx.sessions.current()
+      const mode = current
+        ? (ctx.stores.modes.value.byId[current.id] ?? DEFAULT_MODE)
+        : DEFAULT_MODE
+      const id = await ipc.join(
+        { id: session.id, mode },
+        { signal: ctx.signal },
+      )
+      // The freshly opened session starts in the same mode as this one.
+      ctx.stores.modes.set({
+        byId: { ...ctx.stores.modes.value.byId, [id]: mode },
+      })
       // The desktop app's own server is "sidecar".
       ctx.tabs.open({ server: "sidecar", id }, { focus: true })
     } catch (cause) {

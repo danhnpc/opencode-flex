@@ -25,7 +25,10 @@ export const SessionsIpc = Ipc.define({
   id: "flex-session-bridge.sessions",
   methods: {
     list: { output: Schema.Array(SessionSummarySchema) },
-    join: { input: Schema.String, output: Schema.String },
+    join: {
+      input: Schema.Struct({ id: Schema.String, mode: Schema.String }),
+      output: Schema.String,
+    },
   },
   events: {
     changed: Schema.Boolean,

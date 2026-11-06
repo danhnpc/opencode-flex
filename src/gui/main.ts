@@ -3,6 +3,13 @@ import type { Plugin } from "@opencode/plugin/gui"
 import { SessionsIpc } from "./contract"
 import { claudeSource } from "../sources/claude"
 import { buildTransfer, type TransferClient } from "../core/transfer"
+import {
+  agentFor,
+  DEFAULT_MODE,
+  isMode,
+  permissionsFor,
+  type FlexMode,
+} from "../core/mode"
 import type { SessionSummary } from "../core/types"
 
 /**
@@ -30,7 +37,9 @@ export const main: Plugin.MainSetup = (ctx) => {
       return cache
     },
 
-    join: async (id: string) => {
+    join: async (input: { id: string; mode: string }) => {
+      const id = input.id
+      const mode: FlexMode = isMode(input.mode) ? input.mode : DEFAULT_MODE
       const separator = id.indexOf(":")
       const sourceId = separator === -1 ? sources[0].id : id.slice(0, separator)
       const localId = separator === -1 ? id : id.slice(separator + 1)
@@ -45,7 +54,11 @@ export const main: Plugin.MainSetup = (ctx) => {
       const payload = await buildTransfer(
         client as unknown as TransferClient,
         transcript,
-        { title: summary?.title ?? transcript.sessionId, source: source.id },
+        {
+          title: summary?.title ?? transcript.sessionId,
+          source: source.id,
+          agent: agentFor(mode),
+        },
       )
 
       const target = `ses_flex_${transcript.sessionId
@@ -70,6 +83,17 @@ export const main: Plugin.MainSetup = (ctx) => {
           payload as unknown as ImportInput,
         )
       }
+
+      // Join lands in the mode currently shown by the composer pill.
+      // Re-joining with a different mode updates this same session.
+      await client.session.switchAgent({
+        sessionID: target,
+        agent: agentFor(mode),
+      })
+      await client.session.update({
+        sessionID: target,
+        permissions: permissionsFor(mode),
+      })
       return target
     },
   })

@@ -25,6 +25,7 @@ repo or rewriting the UI — hence the deliberately general name.
 - `location.get`, `agent.list` and `model.default` return the shapes used to build the import payload. The default model here is the OpenCode model, not Claude Code.
 - `POST /api/experimental/session/import` returned `200`, the session was readable via `session.get` (`200`), then removed (`204`). No model call was made.
 - Listing 762 root sessions from ~1.3 GB of transcripts took ~0.3–0.6 s; reading one 500 KB transcript took ~4 ms.
+- All three working modes were exercised end-to-end against a temporary session: `plan` → agent `plan`, `manual` → two `ask` rules, `auto` → cleared rules. Session was removed afterwards.
 
 ---
 
@@ -43,6 +44,28 @@ no agent invocation, and no network call at startup. The join is a pure
 JSON→JSON transform plus one local HTTP call to OpenCode's own server.
 
 ---
+
+## Working modes (composer pill)
+
+A pill above the composer mirrors Claude Code's mode switcher. Click it to pick
+a mode, or press **Shift+Tab** to cycle `plan → manual → auto`.
+
+| Mode | OpenCode agent | Session permissions | Claude Code equivalent |
+| --- | --- | --- | --- |
+| **Plan** | `plan` | `[]` — the plan agent itself denies edits (except `~/.opencode/plan`) | `plan` |
+| **Manual** | `build` | `edit:* → ask`, `shell:* → ask` | `default` |
+| **Auto** | `build` | `[]` — no override, native allow-all | `auto` / `bypassPermissions` |
+
+OpenCode's built-in base policy is already allow-all (only `.env` reads ask), so
+the pill starts at **Auto** — the honest label for a session we have not touched.
+**Manual** is the mode that actively adds `ask` rules, which is the reverse of
+Claude Code's direction. Organization `policies` still hard-deny; Auto cannot
+bypass them.
+
+The mode is stored per session. Joining a session from the panel creates the new
+OpenCode session in the mode currently shown by the pill, and re-joining with a
+different mode updates that same session instead of creating a duplicate.
+Changing modes never calls a model.
 
 ## How it works
 
